@@ -50,7 +50,7 @@ class ConsulFeatureStoreCore implements FeatureStoreCore {
   
   ConsulFeatureStoreCore(Consul client, String prefix) {
     this.client = client;
-    this.prefix = (prefix == null) ? "" : prefix;
+    this.prefix = prefix + "/";
   }
   
   @Override
@@ -61,10 +61,7 @@ class ConsulFeatureStoreCore implements FeatureStoreCore {
   @Override
   public VersionedData getInternal(VersionedDataKind<?> kind, String key) {
     Optional<String> value = client.keyValueClient().getValueAsString(itemKey(kind, key));
-    if (!value.isPresent()) {
-      return null;
-    }
-    return FeatureStoreHelpers.unmarshalJson(kind, value.get());
+    return value.map(s -> FeatureStoreHelpers.unmarshalJson(kind, s)).orElse(null);
   }
 
   @Override
@@ -162,7 +159,7 @@ class ConsulFeatureStoreCore implements FeatureStoreCore {
   }
   
   private String kindKey(VersionedDataKind<?> kind) {
-    return prefix + "/" + kind.getNamespace();
+    return prefix + kind.getNamespace();
   }
   
   private String itemKey(VersionedDataKind<?> kind, String key) {
@@ -170,7 +167,7 @@ class ConsulFeatureStoreCore implements FeatureStoreCore {
   }
   
   private String initedKey() {
-    return prefix + "/$inited";
+    return prefix + "$inited";
   }
   
   private void batchOperations(List<Operation> ops) {

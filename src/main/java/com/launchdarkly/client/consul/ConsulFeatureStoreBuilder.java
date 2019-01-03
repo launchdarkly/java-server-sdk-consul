@@ -22,7 +22,12 @@ import java.net.URL;
  * {@link #existingClient(Consul)} method.
  */
 public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
-  private String prefix = "launchdarkly";
+  /**
+   * The default value for {@link #prefix(String)}.
+   */
+  public static final String DEFAULT_PREFIX = "launchdarkly";
+  
+  private String prefix = DEFAULT_PREFIX;
   private HostAndPort hostAndPort;
   private URL url;
   private Consul existingClient;
@@ -117,7 +122,7 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
   }
   
   /**
-   * Sets an optional namespace prefix for all keys stored in Consul. Use this if you are sharing
+   * Sets the namespace prefix for all keys stored in Consul. Use this if you are sharing
    * the same database table between multiple clients that are for different LaunchDarkly
    * environments, to avoid key collisions. 
    *
@@ -125,7 +130,7 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
    * @return the builder
    */
   public ConsulFeatureStoreBuilder prefix(String prefix) {
-    this.prefix = prefix;
+    this.prefix = (prefix == null || prefix.equals("")) ? DEFAULT_PREFIX : prefix;
     return this;
   }
 
