@@ -1,9 +1,9 @@
 LaunchDarkly SDK for Java - Consul integration
 ==============================================
 
-[![Circle CI](https://circleci.com/gh/launchdarkly/java-client-consul.svg?style=shield)](https://circleci.com/gh/launchdarkly/java-client-consul)
+[![Circle CI](https://circleci.com/gh/launchdarkly/java-server-sdk-consul.svg?style=shield)](https://circleci.com/gh/launchdarkly/java-server-sdk-consul)
 [![Javadocs](http://javadoc.io/badge/com.launchdarkly/launchdarkly-client-consul-store.svg)](http://javadoc.io/doc/com.launchdarkly/launchdarkly-client-consul-store)
-[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Flaunchdarkly%2Fjava-client-consul.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Flaunchdarkly%2Fjava-client-consul?ref=badge_shield)
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Flaunchdarkly%2Fjava-server-sdk-consul.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Flaunchdarkly%2Fjava-server-sdk-consul?ref=badge_shield)
 
 This library provides a Consul-backed persistence mechanism (feature store) for the [LaunchDarkly Java SDK](https://github.com/launchdarkly/java-client), replacing the default in-memory feature store. The Consul API implementation it uses is [`com.orbitz.consul:consul-client`](https://github.com/rickfast/consul-client).
 
