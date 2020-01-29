@@ -14,7 +14,7 @@ import com.orbitz.consul.Consul;
 import java.net.URL;
 
 /**
- * Deprecated builder class for the Redis-based persistent data store.
+ * Deprecated builder class for the Consul-based persistent data store.
  * <p>
  * The replacement for this class is {@link com.launchdarkly.client.integrations.Consul}.
  * This class is retained for backward compatibility with older Java SDK versions and will be removed in a
