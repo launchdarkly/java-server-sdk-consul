@@ -3,11 +3,11 @@
 [![Circle CI](https://circleci.com/gh/launchdarkly/java-server-sdk-consul.svg?style=shield)](https://circleci.com/gh/launchdarkly/java-server-sdk-consul)
 [![Javadocs](http://javadoc.io/badge/com.launchdarkly/launchdarkly-server-sdk-consul-store.svg)](http://javadoc.io/doc/com.launchdarkly/launchdarkly-server-sdk-consul-store)
 
-This library provides a Consul-backed persistence mechanism (feature store) for the [LaunchDarkly Java SDK](https://github.com/launchdarkly/java-server-sdk), replacing the default in-memory feature store. The Consul API implementation it uses is [`com.orbitz.consul:consul-client`](https://github.com/rickfast/consul-client).
+This library provides a Consul-backed persistence mechanism (data store) for the [LaunchDarkly Java SDK](https://github.com/launchdarkly/java-server-sdk), replacing the default in-memory data store. The Consul API implementation it uses is [`com.orbitz.consul:consul-client`](https://github.com/rickfast/consul-client).
 
-This version of the library requires at least version 4.6.4 of the LaunchDarkly Java SDK. The minimum Java version is 8 (because that is the minimum Java version of the Consul API library).
+This version of the library requires at least version 4.12.0 of the LaunchDarkly Java SDK. The minimum Java version is 8 (because that is the minimum Java version of the Consul API library).
 
-For more information, see also: [Using a persistent feature store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
+For more information, see also: [Using a persistent data store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
 
 ## Quick setup
 
@@ -18,7 +18,7 @@ This assumes that you have already installed the LaunchDarkly Java SDK.
         <dependency>
           <groupId>com.launchdarkly</groupId>
           <artifactId>launchdarkly-java-server-sdk-consul-store</artifactId>
-          <version>1.0.1</version>
+          <version>1.1.0</version>
         </dependency>
 
 3. If you do not already have the Consul client in your project, add it. (This needs to be added separately, rather than being included in the LaunchDarkly jar, because some of its classes are exposed in the public interface and some applications might have a different version of it.)
@@ -32,32 +32,39 @@ This assumes that you have already installed the LaunchDarkly Java SDK.
 4. Import the LaunchDarkly package and the package for this library:
 
         import com.launchdarkly.client.*;
-        import com.launchdarkly.client.consul.*;
+        import com.launchdarkly.client.integrations.*;
 
-5. When configuring your SDK client, add the Consul feature store:
+5. When configuring your SDK client, add the Consul data store:
 
-        ConsulFeatureStoreBuilder store = ConsulComponents.consulFeatureStore()
-            .caching(FeatureStoreCacheConfig.enabled().ttlSeconds(30));
+        ConsulDataStoreBuilder consulStore = Consul.dataStore().host("my-consul-host");
         
         LDConfig config = new LDConfig.Builder()
-            .featureStoreFactory(store)
+            .dataStore(Components.persistentDataStore(consulStore))
             .build();
         
         LDClient client = new LDClient("YOUR SDK KEY", config);
 
-By default, the store will try to connect to a local Consul instance on port 8500. There are methods in `ConsulFeatureStoreBuilder` for changing the configuration options. Alternatively, if you already have a fully configured Consul client object, you can tell LaunchDarkly to use that:
+By default, the store will try to connect to a local Consul instance on port 8500. There are methods in `ConsulDataStoreBuilder` for changing the configuration options. Alternatively, if you already have a fully configured Consul client object, you can tell LaunchDarkly to use that:
 
-        ConsulFeatureStoreBuilder store = ConsulComponents.consulFeatureStore()
-            .existingClient(myConsulClientInstance);
+        ConsulDataStoreBuilder consulStore = Consul.dataStore().existingClient(myConsulClientInstance);
 
 ## Caching behavior
 
-To reduce traffic to Consul, there is an optional in-memory cache that retains the last known data for a configurable amount of time. This is on by default; to turn it off (and guarantee that the latest feature flag data will always be retrieved from Consul for every flag evaluation), configure the store as follows:
+By default, for any persistent data store, the Java SDK uses an in-memory cache to reduce traffic to the database; this retains the last known data for a configurable amount of time. To change the caching behavior or disable caching, use the `PersistentDataStoreBuilder` methods:
 
-        ConsulFeatureStoreBuilder store = ConsulComponents.consulFeatureStore()
-            .caching(FeatureStoreCacheConfig.disabled());
+        LDConfig configWithLongerCacheTtl = new LDConfig.Builder()
+            .dataStore(
+                Components.persistentDataStore(consulStore).cacheSeconds(60)
+            )
+            .build();
 
-For other ways to control the behavior of the cache, see `ConsulFeatureStoreBuilder.caching()`.
+        LDConfig configWithNoCaching = new LDConfig.Builder()
+            .dataStore(
+                Components.persistentDataStore(consulStore).noCaching()
+            )
+            .build();
+
+For other ways to control the behavior of the cache, see `PersistentDataStoreBuilder` in the Java SDK.
 
 ## About LaunchDarkly
  
