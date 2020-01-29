@@ -3,7 +3,7 @@ package com.launchdarkly.client.consul;
 import com.launchdarkly.client.FeatureStore;
 import com.launchdarkly.client.FeatureStoreCacheConfig;
 import com.launchdarkly.client.FeatureStoreDatabaseTestBase;
-import com.orbitz.consul.Consul;
+import com.launchdarkly.client.integrations.ConsulDataStoreImplTest;
 
 /**
  * Runs the standard database feature store test suite that's defined in the Java SDK.
@@ -33,12 +33,7 @@ public class DeprecatedConsulFeatureStoreTest extends FeatureStoreDatabaseTestBa
   
   @Override
   protected void clearAllData() {
-    Consul client = Consul.builder().build();
-    try {
-      client.keyValueClient().deleteKeys("/");
-    } finally {
-      client.destroy();
-    }
+    ConsulDataStoreImplTest.clearEverything();
   }
   
   private ConsulFeatureStoreBuilder baseBuilder() {

@@ -29,8 +29,8 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory, Diagnosti
    */
   public static final String DEFAULT_PREFIX = "launchdarkly";
   
-  final PersistentDataStoreBuilder wrappedOuterBuilder;
-  final ConsulDataStoreBuilder wrappedBuilder;
+  private final PersistentDataStoreBuilder wrappedOuterBuilder;
+  private final ConsulDataStoreBuilder wrappedBuilder;
   
   ConsulFeatureStoreBuilder() {
     wrappedBuilder = com.launchdarkly.client.integrations.Consul.dataStore();
