@@ -1,5 +1,5 @@
 repo:
-  public: java-server-sdk-consulte
+  public: java-server-sdk-consul
 
 publications:
   - url: https://oss.sonatype.org/content/groups/public/com/launchdarkly/launchdarkly-java-server-sdk-consul-store/
