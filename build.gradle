@@ -11,7 +11,7 @@ plugins {
     id "java-library"
     id "checkstyle"
     id "signing"
-    id "com.github.johnrengelman.shadow" version "2.0.4"
+    id "com.github.johnrengelman.shadow" version "4.0.4"
     id "maven-publish"
     id "de.marcphilipp.nexus-publish" version "0.3.0"
     id "io.codearte.nexus-staging" version "0.21.2"
@@ -130,6 +130,7 @@ idea {
 
 nexusStaging {
     packageGroup = "com.launchdarkly"
+    numberOfRetries = 40 // we've seen extremely long delays in closing repositories
 }
 
 def pomConfig = {
@@ -181,7 +182,7 @@ publishing {
 }
 
 nexusPublishing {
-    clientTimeout = java.time.Duration.ofMinutes(2) // we've seen extremely long delays in creating repositories
+    clientTimeout = java.time.Duration.ofMinutes(3) // we've seen extremely long delays in creating repositories
     repositories {
         sonatype {
             username = ossrhUsername
