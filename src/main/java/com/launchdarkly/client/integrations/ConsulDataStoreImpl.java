@@ -1,4 +1,4 @@
-package com.launchdarkly.client.consul;
+package com.launchdarkly.client.integrations;
 
 import com.launchdarkly.client.VersionedData;
 import com.launchdarkly.client.VersionedDataKind;
@@ -42,13 +42,13 @@ import java.util.Set;
  * process that did the Init will also receive the new data shortly and do its own Upsert.
  * </ul>
  */
-class ConsulFeatureStoreCore implements FeatureStoreCore {
-  private static final Logger logger = LoggerFactory.getLogger(ConsulFeatureStoreCore.class);
+class ConsulDataStoreImpl implements FeatureStoreCore {
+  private static final Logger logger = LoggerFactory.getLogger(ConsulDataStoreImpl.class);
   
   private final Consul client;
   private final String prefix;
   
-  ConsulFeatureStoreCore(Consul client, String prefix) {
+  ConsulDataStoreImpl(Consul client, String prefix) {
     this.client = client;
     this.prefix = prefix + "/";
   }

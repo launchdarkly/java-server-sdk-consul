@@ -1,61 +1,45 @@
 package com.launchdarkly.client.consul;
 
-import com.google.common.net.HostAndPort;
+import com.launchdarkly.client.Components;
 import com.launchdarkly.client.FeatureStore;
 import com.launchdarkly.client.FeatureStoreCacheConfig;
 import com.launchdarkly.client.FeatureStoreFactory;
-import com.launchdarkly.client.utils.CachingStoreWrapper;
+import com.launchdarkly.client.LDConfig;
+import com.launchdarkly.client.integrations.ConsulDataStoreBuilder;
+import com.launchdarkly.client.integrations.PersistentDataStoreBuilder;
+import com.launchdarkly.client.interfaces.DiagnosticDescription;
+import com.launchdarkly.client.value.LDValue;
 import com.orbitz.consul.Consul;
 
 import java.net.URL;
 
 /**
- * Builder/factory class for the Consul feature store.
+ * Deprecated builder class for the Consul-based persistent data store.
  * <p>
- * Create this builder by calling {@link ConsulComponents#consulFeatureStore()}, then
- * optionally modify its properties with builder methods, and then include it in your client
- * configuration with {@link com.launchdarkly.client.LDConfig.Builder#featureStoreFactory(FeatureStoreFactory)}.
- * <p>
- * The Consul client has many configuration options. This class has corresponding methods for
- * some of the most commonly used ones. If you need more sophisticated control over the
- * Consul client, you can construct one of your own and pass it in with the
- * {@link #existingClient(Consul)} method.
+ * The replacement for this class is {@link com.launchdarkly.client.integrations.Consul}.
+ * This class is retained for backward compatibility with older Java SDK versions and will be removed in a
+ * future version. 
+ * 
+ * @deprecated Use {@link com.launchdarkly.client.integrations.Consul#dataStore()}
  */
-public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
+@Deprecated
+public class ConsulFeatureStoreBuilder implements FeatureStoreFactory, DiagnosticDescription {
   /**
    * The default value for {@link #prefix(String)}.
    */
   public static final String DEFAULT_PREFIX = "launchdarkly";
   
-  private String prefix = DEFAULT_PREFIX;
-  private HostAndPort hostAndPort;
-  private URL url;
-  private Consul existingClient;
-  private FeatureStoreCacheConfig caching = FeatureStoreCacheConfig.DEFAULT;
+  private final PersistentDataStoreBuilder wrappedOuterBuilder;
+  private final ConsulDataStoreBuilder wrappedBuilder;
   
   ConsulFeatureStoreBuilder() {
+    wrappedBuilder = com.launchdarkly.client.integrations.Consul.dataStore();
+    wrappedOuterBuilder = Components.persistentDataStore(wrappedBuilder);
   }
   
   @Override
   public FeatureStore createFeatureStore() {
-    Consul client = createClient();
-    ConsulFeatureStoreCore core = new ConsulFeatureStoreCore(client, prefix);
-    CachingStoreWrapper wrapper = CachingStoreWrapper.builder(core).caching(caching).build();
-    return wrapper;
-  }
-  
-  private Consul createClient() {
-    if (existingClient != null) {
-      return existingClient;
-    }
-    Consul.Builder builder = Consul.builder();
-    if (hostAndPort != null) {
-      builder = builder.withHostAndPort(hostAndPort);
-    }
-    if (url != null) {
-      builder = builder.withUrl(url);
-    }
-    return builder.build();
+    return wrappedOuterBuilder.createFeatureStore();
   }
   
   /**
@@ -66,16 +50,7 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
    * @see #port(int)
    */
   public ConsulFeatureStoreBuilder host(String host) {
-    if (host == null) {
-      hostAndPort = null;
-    } else {
-      if (hostAndPort == null) {
-        hostAndPort = HostAndPort.fromParts(host, Consul.DEFAULT_HTTP_PORT);
-      } else {
-        hostAndPort = HostAndPort.fromParts(host, hostAndPort.getPort());
-      }
-    }
-    url = null;
+    wrappedBuilder.host(host);
     return this;
   }
 
@@ -87,12 +62,7 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
    * @see #host(String)
    */
   public ConsulFeatureStoreBuilder port(int port) {
-    if (hostAndPort == null) {
-      hostAndPort = HostAndPort.fromParts(Consul.DEFAULT_HTTP_HOST, port);
-    } else {
-      hostAndPort = HostAndPort.fromParts(hostAndPort.getHost(), port);
-    }
-    url = null;
+    wrappedBuilder.port(port);
     return this;
   }
 
@@ -103,8 +73,7 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
    * @return the builder
    */
   public ConsulFeatureStoreBuilder url(URL url) {
-    this.url = url;
-    this.hostAndPort = null;
+    wrappedBuilder.url(url);
     return this;
   }
   
@@ -117,7 +86,7 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
    * @return the builder
    */
   public ConsulFeatureStoreBuilder existingClient(Consul client) {
-    this.existingClient = client;
+    wrappedBuilder.existingClient(client);
     return this;
   }
   
@@ -130,7 +99,7 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
    * @return the builder
    */
   public ConsulFeatureStoreBuilder prefix(String prefix) {
-    this.prefix = (prefix == null || prefix.equals("")) ? DEFAULT_PREFIX : prefix;
+    wrappedBuilder.prefix(prefix);
     return this;
   }
 
@@ -143,7 +112,13 @@ public class ConsulFeatureStoreBuilder implements FeatureStoreFactory {
    * @return the builder
    */
   public ConsulFeatureStoreBuilder caching(FeatureStoreCacheConfig caching) {
-    this.caching = caching;
+    wrappedOuterBuilder.cacheTime(caching.getCacheTime(), caching.getCacheTimeUnit());
+    wrappedOuterBuilder.staleValuesPolicy(caching.getStaleValuesPolicy().toNewEnum());
     return this;
+  }
+
+  @Override
+  public LDValue describeConfiguration(LDConfig config) {
+    return LDValue.of("Consul");
   }
 }

@@ -3,20 +3,21 @@ package com.launchdarkly.client.consul;
 import com.launchdarkly.client.FeatureStore;
 import com.launchdarkly.client.FeatureStoreCacheConfig;
 import com.launchdarkly.client.FeatureStoreDatabaseTestBase;
-import com.orbitz.consul.Consul;
+import com.launchdarkly.client.integrations.ConsulDataStoreImplTest;
 
 /**
  * Runs the standard database feature store test suite that's defined in the Java SDK.
  * <p>
- * Note that you must be running a local DynamoDB instance on port 8000 to run these tests.
+ * Note that you must be running a local Consul instance on port 8500 to run these tests.
  * The simplest way to do this is:
  * <pre>
- *     docker run -p 8000:8000 amazon/dynamodb-local
+ *     docker run -p 8500:8500 consul agent -server -node=server-1 -bootstrap-expect=1 -client=0.0.0.0
  * </pre>
  */
-public class ConsulFeatureStoreTest extends FeatureStoreDatabaseTestBase<FeatureStore> {
+@SuppressWarnings({ "deprecation", "javadoc" })
+public class DeprecatedConsulFeatureStoreTest extends FeatureStoreDatabaseTestBase<FeatureStore> {
 
-  public ConsulFeatureStoreTest(boolean cached) {
+  public DeprecatedConsulFeatureStoreTest(boolean cached) {
     super(cached);
   }
   
@@ -32,12 +33,7 @@ public class ConsulFeatureStoreTest extends FeatureStoreDatabaseTestBase<Feature
   
   @Override
   protected void clearAllData() {
-    Consul client = Consul.builder().build();
-    try {
-      client.keyValueClient().deleteKeys("/");
-    } finally {
-      client.destroy();
-    }
+    ConsulDataStoreImplTest.clearEverything();
   }
   
   private ConsulFeatureStoreBuilder baseBuilder() {
