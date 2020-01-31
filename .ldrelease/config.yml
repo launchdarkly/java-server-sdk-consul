@@ -1,0 +1,16 @@
+repo:
+  public: java-server-sdk-consulte
+
+publications:
+  - url: https://oss.sonatype.org/content/groups/public/com/launchdarkly/launchdarkly-java-server-sdk-consul-store/
+    description: Sonatype
+  - url: https://javadoc.io/doc/com.launchdarkly/launchdarkly-java-server-sdk-consul-store
+    description: documentation (javadoc.io)
+
+template:
+  name: gradle
+  skip:
+    - test  # Running the unit tests would require installing Consul. They've already been run in CI.
+
+documentation:
+  githubPages: true
