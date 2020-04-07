@@ -44,7 +44,7 @@ import java.util.Set;
  * process that did the Init will also receive the new data shortly and do its own Upsert.
  * </ul>
  */
-class ConsulDataStoreImpl implements PersistentDataStore {
+final class ConsulDataStoreImpl implements PersistentDataStore {
   private static final Logger logger = LoggerFactory.getLogger(ConsulDataStoreImpl.class);
   
   private final Consul client;

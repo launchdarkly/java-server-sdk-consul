@@ -42,7 +42,7 @@ import java.net.URL;
  * 
  * @since 1.1.0
  */
-public class ConsulDataStoreBuilder implements PersistentDataStoreFactory, DiagnosticDescription {
+public final class ConsulDataStoreBuilder implements PersistentDataStoreFactory, DiagnosticDescription {
   /**
    * The default value for {@link #prefix(String)}.
    */
