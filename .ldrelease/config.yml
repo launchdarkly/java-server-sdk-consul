@@ -1,6 +1,12 @@
 repo:
   public: java-server-sdk-consul
 
+releasableBranches:
+  - name: master
+    description: 2.x - for Java SDK 5.0+
+  - name: 1.x
+    description: for Java SDK 4.x
+
 publications:
   - url: https://oss.sonatype.org/content/groups/public/com/launchdarkly/launchdarkly-java-server-sdk-consul-store/
     description: Sonatype

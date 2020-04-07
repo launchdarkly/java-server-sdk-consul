@@ -5,7 +5,7 @@
 
 This library provides a Consul-backed persistence mechanism (data store) for the [LaunchDarkly Java SDK](https://github.com/launchdarkly/java-server-sdk), replacing the default in-memory data store. The Consul API implementation it uses is [`com.orbitz.consul:consul-client`](https://github.com/rickfast/consul-client).
 
-This version of the library requires at least version 4.12.0 of the LaunchDarkly Java SDK. The minimum Java version is 8 (because that is the minimum Java version of the Consul API library).
+This version of the library is for use with LaunchDarkly Java SDK versions greater than or equal to 4.12.0 and less than 5.0; for Java SDK 5.0 and above, the minimum version of this library is 2.0. The minimum Java version is 8 (because that is the minimum Java version of the Consul API library).
 
 For more information, see also: [Using a persistent data store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
 
