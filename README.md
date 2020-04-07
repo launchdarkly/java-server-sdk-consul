@@ -18,7 +18,7 @@ This assumes that you have already installed the LaunchDarkly Java SDK.
         <dependency>
           <groupId>com.launchdarkly</groupId>
           <artifactId>launchdarkly-java-server-sdk-consul-store</artifactId>
-          <version>1.1.0</version>
+          <version>2.0.0</version>
         </dependency>
 
 2. The Consul client library should be pulled in automatically if you do not specify a dependency for it. If you want to use a different version, you may add your own dependency:
