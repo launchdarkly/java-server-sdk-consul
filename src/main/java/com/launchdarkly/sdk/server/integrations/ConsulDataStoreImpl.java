@@ -132,7 +132,7 @@ class ConsulDataStoreImpl implements PersistentDataStore {
     
     // We will potentially keep retrying indefinitely until someone's write succeeds
     while (true) {
-      Optional<Value> oldValue = client.keyValueClient().getValue(key);
+      Optional<Value> oldValue = client.keyValueClient().getValue(consulKey);
       int oldVersion = oldValue.flatMap(v -> v.getValueAsString())
           .map(j -> kind.deserialize(j).getVersion()).orElse(-1);
       
