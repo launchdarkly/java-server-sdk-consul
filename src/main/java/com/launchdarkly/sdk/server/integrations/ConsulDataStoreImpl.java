@@ -1,9 +1,11 @@
-package com.launchdarkly.client.integrations;
+package com.launchdarkly.sdk.server.integrations;
 
-import com.launchdarkly.client.VersionedData;
-import com.launchdarkly.client.VersionedDataKind;
-import com.launchdarkly.client.utils.FeatureStoreCore;
-import com.launchdarkly.client.utils.FeatureStoreHelpers;
+import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.DataKind;
+import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.FullDataSet;
+import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.ItemDescriptor;
+import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.KeyedItems;
+import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.SerializedItemDescriptor;
+import com.launchdarkly.sdk.server.interfaces.PersistentDataStore;
 import com.orbitz.consul.Consul;
 import com.orbitz.consul.ConsulException;
 import com.orbitz.consul.model.kv.Operation;
@@ -15,8 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +44,7 @@ import java.util.Set;
  * process that did the Init will also receive the new data shortly and do its own Upsert.
  * </ul>
  */
-class ConsulDataStoreImpl implements FeatureStoreCore {
+class ConsulDataStoreImpl implements PersistentDataStore {
   private static final Logger logger = LoggerFactory.getLogger(ConsulDataStoreImpl.class);
   
   private final Consul client;
@@ -59,23 +61,26 @@ class ConsulDataStoreImpl implements FeatureStoreCore {
   }
 
   @Override
-  public VersionedData getInternal(VersionedDataKind<?> kind, String key) {
+  public SerializedItemDescriptor get(DataKind kind, String key) {
     Optional<String> value = client.keyValueClient().getValueAsString(itemKey(kind, key));
-    return value.map(s -> FeatureStoreHelpers.unmarshalJson(kind, s)).orElse(null);
+    return value.map(s -> new SerializedItemDescriptor(0, false, s)).orElse(null);
   }
 
   @Override
-  public Map<String, VersionedData> getAllInternal(VersionedDataKind<?> kind) {
-    Map<String, VersionedData> itemsOut = new HashMap<>();
-    for (String value: client.keyValueClient().getValuesAsString(kindKey(kind))) { 
-      VersionedData item = FeatureStoreHelpers.unmarshalJson(kind, value);
-      itemsOut.put(item.getKey(), item);
+  public KeyedItems<SerializedItemDescriptor> getAll(DataKind kind) {
+    String baseKey = kindKey(kind);
+    List<Value> values = client.keyValueClient().getValues(baseKey);
+    List<Map.Entry<String, SerializedItemDescriptor>> itemsOut = new ArrayList<>(values.size());
+    for (Value value: values) {
+      String key = value.getKey().substring(baseKey.length() + 1);
+      itemsOut.add(new AbstractMap.SimpleEntry<>(key,
+          new SerializedItemDescriptor(0, false, value.getValueAsString().orElse(null))));
     }
-    return itemsOut;
+    return new KeyedItems<>(itemsOut);
   }
 
   @Override
-  public void initInternal(Map<VersionedDataKind<?>, Map<String, VersionedData>> allData) {
+  public void init(FullDataSet<SerializedItemDescriptor> allData) {
     // Start by reading the existing keys; we will later delete any of these that weren't in allData.
     Set<String> unusedOldKeys = new HashSet<>();
     try {
@@ -91,10 +96,10 @@ class ConsulDataStoreImpl implements FeatureStoreCore {
     int numItems = 0;
     
     // Insert or update every provided item
-    for (Map.Entry<VersionedDataKind<?>, Map<String, VersionedData>> entry: allData.entrySet()) {
-      VersionedDataKind<?> kind = entry.getKey();
-      for (VersionedData item: entry.getValue().values()) {
-        String json = FeatureStoreHelpers.marshalJson(item);
+    for (Map.Entry<DataKind, KeyedItems<SerializedItemDescriptor>> entry: allData.getData()) {
+      DataKind kind = entry.getKey();
+      for (Map.Entry<String, SerializedItemDescriptor> item: entry.getValue().getItems()) {
+        String json = jsonOrPlaceholder(kind, item.getValue());
         String key = itemKey(kind, item.getKey());
         Operation op = Operation.builder(Verb.SET).key(key).value(json).build();
         ops.add(op);
@@ -121,20 +126,19 @@ class ConsulDataStoreImpl implements FeatureStoreCore {
   }
 
   @Override
-  public VersionedData upsertInternal(VersionedDataKind<?> kind, VersionedData newItem) {
-    String key = itemKey(kind, newItem.getKey());
-    String json = FeatureStoreHelpers.marshalJson(newItem);
+  public boolean upsert(DataKind kind, String key, SerializedItemDescriptor newItem) {
+    String consulKey = itemKey(kind, key);
+    String json = jsonOrPlaceholder(kind, newItem);
     
     // We will potentially keep retrying indefinitely until someone's write succeeds
     while (true) {
       Optional<Value> oldValue = client.keyValueClient().getValue(key);
-      VersionedData oldItem = oldValue.flatMap(v -> v.getValueAsString()).map(
-          s -> FeatureStoreHelpers.unmarshalJson(kind, s)).orElse(null);
+      int oldVersion = oldValue.flatMap(v -> v.getValueAsString())
+          .map(j -> kind.deserialize(j).getVersion()).orElse(-1);
       
-      // Check whether the item is stale. If so, don't do the update (and return the existing item to
-      // FeatureStoreWrapper so it can be cached)
-      if (oldItem != null && oldItem.getVersion() >= newItem.getVersion()) {
-        return oldItem;
+      // Check whether the item is stale. If so, don't do the update.
+      if (oldVersion >= newItem.getVersion()) {
+        return false;
       }
       
       // Otherwise, try to write. We will do a compare-and-set operation, so the write will only succeed if
@@ -142,10 +146,10 @@ class ConsulDataStoreImpl implements FeatureStoreCore {
       // previous ModifyIndex was zero, it means the key did not previously exist and the write will only
       // succeed if it still doesn't exist.
       long modifyIndex = oldValue.map(v -> v.getModifyIndex()).orElse(0L);
-      boolean success = client.keyValueClient().putValue(key, json, 0,
+      boolean success = client.keyValueClient().putValue(consulKey, json, 0,
           ImmutablePutOptions.builder().cas(modifyIndex).build());
       if (success) {
-        return newItem;
+        return true;
       }
       
       // If we failed, retry the whole shebang
@@ -154,20 +158,41 @@ class ConsulDataStoreImpl implements FeatureStoreCore {
   }
 
   @Override
-  public boolean initializedInternal() {
+  public boolean isInitialized() {
     return client.keyValueClient().getValue(initedKey()).isPresent();
   }
-  
-  private String kindKey(VersionedDataKind<?> kind) {
-    return prefix + kind.getNamespace();
+
+  @Override
+  public boolean isStoreAvailable() {
+    try {
+      isInitialized(); // don't care about the return value, just that it doesn't throw an exception
+      return true;
+    } catch (Exception e) { // don't care about exception class, since any exception means the Consul request couldn't be made
+      return false;
+    }
   }
   
-  private String itemKey(VersionedDataKind<?> kind, String key) {
+  private String kindKey(DataKind kind) {
+    return prefix + kind.getName();
+  }
+  
+  private String itemKey(DataKind kind, String key) {
     return kindKey(kind) + "/" + key;
   }
   
   private String initedKey() {
     return prefix + "$inited";
+  }
+
+  private static String jsonOrPlaceholder(DataKind kind, SerializedItemDescriptor serializedItem) {
+    String s = serializedItem.getSerializedItem();
+    if (s != null) {
+      return s;
+    }
+    // For backward compatibility with previous implementations of the Consul integration, we must store a
+    // special placeholder string for deleted items. DataKind.serializeItem() will give us this string if
+    // we pass a deleted ItemDescriptor.
+    return kind.serialize(ItemDescriptor.deletedItem(serializedItem.getVersion()));
   }
   
   private void batchOperations(List<Operation> ops) {

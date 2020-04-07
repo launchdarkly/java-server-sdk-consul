@@ -5,7 +5,7 @@
 
 This library provides a Consul-backed persistence mechanism (data store) for the [LaunchDarkly Java SDK](https://github.com/launchdarkly/java-server-sdk), replacing the default in-memory data store. The Consul API implementation it uses is [`com.orbitz.consul:consul-client`](https://github.com/rickfast/consul-client).
 
-This version of the library requires at least version 4.12.0 of the LaunchDarkly Java SDK. The minimum Java version is 8 (because that is the minimum Java version of the Consul API library).
+This version of the library requires at least version 5.0.0 of the LaunchDarkly Java SDK. The minimum Java version is 8.
 
 For more information, see also: [Using a persistent data store](https://docs.launchdarkly.com/v2.0/docs/using-a-persistent-feature-store).
 
@@ -21,7 +21,7 @@ This assumes that you have already installed the LaunchDarkly Java SDK.
           <version>1.1.0</version>
         </dependency>
 
-3. If you do not already have the Consul client in your project, add it. (This needs to be added separately, rather than being included in the LaunchDarkly jar, because some of its classes are exposed in the public interface and some applications might have a different version of it.)
+2. The Consul client library should be pulled in automatically if you do not specify a dependency for it. If you want to use a different version, you may add your own dependency:
 
         <dependency>
           <groupId>com.orbitz.consul</groupId>
@@ -29,42 +29,38 @@ This assumes that you have already installed the LaunchDarkly Java SDK.
           <version>1.3.0</version>
         </dependency>
 
-4. Import the LaunchDarkly package and the package for this library:
+3. Import the LaunchDarkly package and the package for this library:
 
-        import com.launchdarkly.client.*;
-        import com.launchdarkly.client.integrations.*;
+        import com.launchdarkly.sdk.server.*;
+        import com.launchdarkly.sdk.server.integrations.*;
 
-5. When configuring your SDK client, add the Consul data store:
-
-        ConsulDataStoreBuilder consulStore = Consul.dataStore().host("my-consul-host");
+4. When configuring your SDK client, add the Consul data store as a `persistentDataStore`. You may specify any custom Consul options using the methods of `ConsulDataStoreBuilder`. For instance, to customize the Consul hostname:
         
         LDConfig config = new LDConfig.Builder()
-            .dataStore(Components.persistentDataStore(consulStore))
+            .dataStore(
+                Components.persistentDataStore(
+                	Consul.dataStore().host("my-consul-host")
+                )
+            )
             .build();
-        
-        LDClient client = new LDClient("YOUR SDK KEY", config);
 
 By default, the store will try to connect to a local Consul instance on port 8500. There are methods in `ConsulDataStoreBuilder` for changing the configuration options. Alternatively, if you already have a fully configured Consul client object, you can tell LaunchDarkly to use that:
 
-        ConsulDataStoreBuilder consulStore = Consul.dataStore().existingClient(myConsulClientInstance);
+                Components.persistentDataStore(
+                	Consul.dataStore().existingClient(myConsulClientInstance)
+                )
 
 ## Caching behavior
 
-By default, for any persistent data store, the Java SDK uses an in-memory cache to reduce traffic to the database; this retains the last known data for a configurable amount of time. To change the caching behavior or disable caching, use the `PersistentDataStoreBuilder` methods:
+The LaunchDarkly SDK has a standard caching mechanism for any persistent data store, to reduce database traffic. This is configured through the SDK's `PersistentFeatureStoreBuilder` class as described the SDK documentation. For instance, to specify a cache TTL of 5 minutes:
 
-        LDConfig configWithLongerCacheTtl = new LDConfig.Builder()
+        LDConfig config = new LDConfig.Builder()
             .dataStore(
-                Components.persistentDataStore(consulStore).cacheSeconds(60)
+                Components.persistentDataStore(
+                    Consul.dataStore()
+                ).cacheTime(Duration.ofMinutes(5))
             )
             .build();
-
-        LDConfig configWithNoCaching = new LDConfig.Builder()
-            .dataStore(
-                Components.persistentDataStore(consulStore).noCaching()
-            )
-            .build();
-
-For other ways to control the behavior of the cache, see `PersistentDataStoreBuilder` in the Java SDK.
 
 ## About LaunchDarkly
  
