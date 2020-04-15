@@ -13,7 +13,7 @@ For more information, see also: [Using a persistent data store](https://docs.lau
 
 This assumes that you have already installed the LaunchDarkly Java SDK.
 
-1. Add this library to your project:
+1. Add this library to your project (updating the version number to use the [latest release](https://github.com/launchdarkly/java-server-sdk-consul/releases)):
 
         <dependency>
           <groupId>com.launchdarkly</groupId>
