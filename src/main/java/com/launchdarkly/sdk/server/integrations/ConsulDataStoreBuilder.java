@@ -1,11 +1,12 @@
-package com.launchdarkly.client.integrations;
+package com.launchdarkly.sdk.server.integrations;
 
 import com.google.common.net.HostAndPort;
-import com.launchdarkly.client.LDConfig;
-import com.launchdarkly.client.interfaces.DiagnosticDescription;
-import com.launchdarkly.client.interfaces.PersistentDataStoreFactory;
-import com.launchdarkly.client.utils.FeatureStoreCore;
-import com.launchdarkly.client.value.LDValue;
+import com.launchdarkly.sdk.server.LDConfig;
+import com.launchdarkly.sdk.server.interfaces.ClientContext;
+import com.launchdarkly.sdk.server.interfaces.DiagnosticDescription;
+import com.launchdarkly.sdk.server.interfaces.PersistentDataStoreFactory;
+import com.launchdarkly.sdk.server.interfaces.PersistentDataStore;
+import com.launchdarkly.sdk.LDValue;
 import com.orbitz.consul.Consul;
 
 import java.net.URL;
@@ -13,10 +14,11 @@ import java.net.URL;
 /**
  * A builder for configuring the Consul-based persistent data store.
  * <p>
- * Obtain an instance of this class by calling {@link com.launchdarkly.client.integrations.Consul#dataStore()}. After calling its methods
- * to specify any desired custom settings, you can pass it directly into the SDK configuration with
- * {@link com.launchdarkly.client.LDConfig.Builder#dataStore(com.launchdarkly.client.FeatureStoreFactory)}.
- * You do not need to call {@link #createPersistentDataStore()} yourself to build the actual data store; that
+ * Obtain an instance of this class by calling {@link com.launchdarkly.sdk.server.integrations.Consul#dataStore()}. After calling its methods
+ * to specify any desired custom settings, wrap it in a {@link com.launchdarkly.sdk.server.integrations.PersistentDataStoreBuilder}
+ * by calling {@code Components.persistentDataStore()}, then pass the result into the SDK configuration with
+ * {@link com.launchdarkly.sdk.server.LDConfig.Builder#dataStore(com.launchdarkly.sdk.server.interfaces.DataStoreFactory)}.
+ * You do not need to call {@link #createPersistentDataStore(ClientContext)} yourself to build the actual data store; that
  * will be done by the SDK.
  * <p>
  * The Consul client has many configuration options. This class has corresponding methods for
@@ -40,7 +42,7 @@ import java.net.URL;
  * 
  * @since 1.1.0
  */
-public class ConsulDataStoreBuilder implements PersistentDataStoreFactory, DiagnosticDescription {
+public final class ConsulDataStoreBuilder implements PersistentDataStoreFactory, DiagnosticDescription {
   /**
    * The default value for {@link #prefix(String)}.
    */
@@ -53,12 +55,7 @@ public class ConsulDataStoreBuilder implements PersistentDataStoreFactory, Diagn
   
   ConsulDataStoreBuilder() {
   }
-  
-  @Override
-  public FeatureStoreCore createPersistentDataStore() {
-    return new ConsulDataStoreImpl(createClient(), prefix);
-  }
-  
+
   private Consul createClient() {
     if (existingClient != null) {
       return existingClient;
@@ -147,6 +144,15 @@ public class ConsulDataStoreBuilder implements PersistentDataStoreFactory, Diagn
   public ConsulDataStoreBuilder prefix(String prefix) {
     this.prefix = (prefix == null || prefix.equals("")) ? DEFAULT_PREFIX : prefix;
     return this;
+  }
+
+  /**
+   * Called internally by the SDK to create the actual data store instance.
+   * @return the data store configured by this builder
+   */
+  @Override
+  public PersistentDataStore createPersistentDataStore(ClientContext context) {
+    return new ConsulDataStoreImpl(createClient(), prefix);
   }
 
   @Override
