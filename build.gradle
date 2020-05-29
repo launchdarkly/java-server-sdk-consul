@@ -122,7 +122,7 @@ publishing {
                 scm {
                     connection = 'scm:git:git://github.com/launchdarkly/java-server-sdk-consul.git'
                     developerConnection = 'scm:git:ssh:git@github.com:launchdarkly/java-server-sdk-consul.git'
-                    url 'https://github.com/launchdarkly/java-server-sdk-consul'
+                    url = 'https://github.com/launchdarkly/java-server-sdk-consul'
                 }
             }
         }
