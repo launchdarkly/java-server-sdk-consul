@@ -45,7 +45,7 @@ import java.util.Set;
  * </ul>
  */
 final class ConsulDataStoreImpl implements PersistentDataStore {
-  private static final Logger logger = LoggerFactory.getLogger(ConsulDataStoreImpl.class);
+  private static final Logger logger = LoggerFactory.getLogger("com.launchdarkly.sdk.server.LDClient.DataStore.Consul");
   
   private final Consul client;
   private final String prefix;
