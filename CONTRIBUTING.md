@@ -40,5 +40,8 @@ To build the library and run all unit tests:
 ./gradlew test
 ```
 
-The tests expect you to have Consul running locally.
+The tests expect you to have Consul running locally. A simple way to do this is with Docker:
 
+```bash
+docker run -p 8500:8500 consul
+```
