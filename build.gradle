@@ -11,15 +11,12 @@ plugins {
     id "java-library"
     id "checkstyle"
     id "signing"
-    id "com.github.johnrengelman.shadow" version "4.0.4"
     id "maven-publish"
     id "de.marcphilipp.nexus-publish" version "0.3.0"
     id "io.codearte.nexus-staging" version "0.21.2"
     id "org.ajoberstar.git-publish" version "2.1.3"
     id "idea"
 }
-
-import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocation
 
 configurations.all {
     // check for updates every build for dependencies with: 'changing: true'
@@ -36,49 +33,29 @@ repositories {
 allprojects {
     group = 'com.launchdarkly'
     version = "${version}"
+    archivesBaseName = 'launchdarkly-java-server-sdk-consul-store'
     sourceCompatibility = 1.8
     targetCompatibility = 1.8
 }
 
-ext {
-    sdkBasePackage = "com.launchdarkly.client.consul"
-    sdkBaseName = "launchdarkly-java-server-sdk-consul-store"
-}
+ext.versions = [
+    "sdk": "5.0.0", // the *lowest* version we're compatible with
+    "consulClient": "1.3.0",
+    "slf4j": "1.7.21"
+]
 
 ext.libraries = [:]
 
-// Add dependencies to "libraries.internal" that are not exposed in our public API. These
-// will be embedded with shaded names in the uberjar.
-libraries.internal = [
-    //"com.google.guava:guava:19.0"
-]
-
-// Add dependencies to "libraries.external" that are exposed in our public API, or that have
-// global state that must be shared between the SDK and the caller. These are not embedded
-// in the uberjar; the caller must provide them on the classpath at runtime.
-libraries.external = [
-    "com.launchdarkly:launchdarkly-java-server-sdk:4.12.0",
-    "com.orbitz.consul:consul-client:1.3.0",
-    "org.slf4j:slf4j-api:1.7.21"
-]
-
-// Add dependencies to "libraries.test" that are used only in unit tests.
-libraries.test = [
-    "org.hamcrest:hamcrest-all:1.3",
-    "junit:junit:4.12",
-    "ch.qos.logback:logback-classic:1.1.7",
-    "com.launchdarkly:launchdarkly-java-server-sdk:4.12.0:test" // our unit tests use helper classes from the SDK
-]
-
 dependencies {
-    implementation libraries.internal
-    compileClasspath libraries.external
-    runtime libraries.internal
-    testImplementation libraries.test, libraries.internal, libraries.external
-
-    // Unlike what the name might suggest, the "shadow" configuration specifies dependencies that
-    // should *not* be shaded by the Shadow plugin when we build our shaded jars.
-    shadow libraries.external
+    api "com.launchdarkly:launchdarkly-java-server-sdk:${versions.sdk}"
+    api "com.orbitz.consul:consul-client:${versions.consulClient}"
+    api "org.slf4j:slf4j-api:${versions.slf4j}"
+    testCompile "org.hamcrest:hamcrest-all:1.3"
+    testCompile "junit:junit:4.12"
+    testCompile "com.launchdarkly:launchdarkly-java-server-sdk:${versions.sdk}:test" // our unit tests use helper classes from the SDK
+    testRuntime "ch.qos.logback:logback-classic:1.1.7"
+    testRuntime "com.google.guava:guava:28.2-jre" // required by SDK tests, not used in this library itself
+    testRuntime "com.google.code.gson:gson:2.7" // same as above
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
@@ -91,26 +68,8 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-shadowJar {
-    baseName = sdkBaseName
-    
-    // No classifier means that the shaded jar becomes the default artifact
-    classifier = ''
-
-    manifest {
-        attributes("Implementation-Version": version)
-    }
-}
-
-task relocateShadowJar(type: ConfigureShadowRelocation) {
-    target = tasks.shadowJar
-    prefix = "com.launchdarkly.shaded"
-}
-
-tasks.shadowJar.dependsOn tasks.relocateShadowJar
-
 artifacts {
-    archives sourcesJar, javadocJar, shadowJar
+    archives sourcesJar, javadocJar
 }
 
 test {
@@ -133,46 +92,38 @@ nexusStaging {
     numberOfRetries = 40 // we've seen extremely long delays in closing repositories
 }
 
-def pomConfig = {
-    name 'LaunchDarkly Java SDK Consul integration'
-    packaging 'jar'
-    url 'https://github.com/launchdarkly/java-server-sdk-consul'
-
-    licenses {
-        license {
-            name 'The Apache License, Version 2.0'
-            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-        }
-    }
-
-    developers {
-        developer {
-            id 'jkodumal'
-            name 'John Kodumal'
-            email 'john@launchdarkly.com'
-        }
-    }
-
-    scm {
-        connection 'scm:git:git://github.com/launchdarkly/java-server-sdk-consul.git'
-        developerConnection 'scm:git:ssh:git@github.com:launchdarkly/java-server-sdk-consul.git'
-        url 'https://github.com/launchdarkly/java-server-sdk-consul'
-    }
-}
-
 publishing {
     publications {
-        shadow(MavenPublication) { publication ->
-            project.shadow.component(publication)
+        mavenJava(MavenPublication) {
+            from components.java
 
-            artifactId = sdkBaseName
+            groupId = 'com.launchdarkly'
+            artifactId = project.archivesBaseName
+            
             artifact sourcesJar
             artifact javadocJar
             
-            pom.withXml {
-                def root = asNode()
-                root.appendNode('description', 'Consul-backed feature store for the LaunchDarkly Java SDK')
-                asNode().children().last() + pomConfig
+            pom {
+                name = project.archivesBaseName
+                description = 'LaunchDarkly Java SDK Consul integration'
+                url = 'https://github.com/launchdarkly/java-server-sdk-consul'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        name = 'LaunchDarkly'
+                        email = 'team@launchdarkly.com'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/launchdarkly/java-server-sdk-consul.git'
+                    developerConnection = 'scm:git:ssh:git@github.com:launchdarkly/java-server-sdk-consul.git'
+                    url = 'https://github.com/launchdarkly/java-server-sdk-consul'
+                }
             }
         }
     }
@@ -192,7 +143,11 @@ nexusPublishing {
 }
 
 signing {
-    sign publishing.publications.shadow
+    sign publishing.publications.mavenJava
+}
+
+tasks.withType(Sign) {
+    onlyIf { !"1".equals(project.findProperty("LD_SKIP_SIGNING")) } // so we can build jars for testing in CI
 }
 
 gitPublish {

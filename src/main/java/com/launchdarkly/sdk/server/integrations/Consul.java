@@ -1,10 +1,7 @@
-package com.launchdarkly.client.integrations;
+package com.launchdarkly.sdk.server.integrations;
 
 /**
  * Integration between the LaunchDarkly SDK and Consul.
- * <p>
- * This API uses the persistent data store model that was introduced in version 4.12.0 of the LaunchDarkly Java SDK.
- * If you are using an older Java SDK version, use {@link com.launchdarkly.client.consul.ConsulComponents}.
  * 
  * @since 1.1.0
  */
@@ -17,9 +14,9 @@ public abstract class Consul {
    * <p>
    * This object can be modified with {@link ConsulDataStoreBuilder} methods for any desired
    * custom Consul options. Then, pass it to
-   * {@link com.launchdarkly.client.Components#persistentDataStore(com.launchdarkly.client.interfaces.PersistentDataStoreFactory)}
+   * {@link com.launchdarkly.sdk.server.Components#persistentDataStore(com.launchdarkly.sdk.server.interfaces.PersistentDataStoreFactory)}
    * and set any desired caching options. Finally, pass the result to
-   * {@link com.launchdarkly.client.LDConfig.Builder#dataStore(com.launchdarkly.client.FeatureStoreFactory)}.
+   * {@link com.launchdarkly.sdk.server.LDConfig.Builder#dataStore(com.launchdarkly.sdk.server.interfaces.DataStoreFactory)}.
    * For example:
    * 
    * <pre><code>
