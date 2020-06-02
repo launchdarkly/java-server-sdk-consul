@@ -2,6 +2,7 @@ package com.launchdarkly.sdk.server.integrations;
 
 import com.google.common.net.HostAndPort;
 import com.launchdarkly.sdk.server.LDConfig;
+import com.launchdarkly.sdk.server.interfaces.BasicConfiguration;
 import com.launchdarkly.sdk.server.interfaces.ClientContext;
 import com.launchdarkly.sdk.server.interfaces.DiagnosticDescription;
 import com.launchdarkly.sdk.server.interfaces.PersistentDataStoreFactory;
@@ -156,7 +157,7 @@ public final class ConsulDataStoreBuilder implements PersistentDataStoreFactory,
   }
 
   @Override
-  public LDValue describeConfiguration(LDConfig config) {
+  public LDValue describeConfiguration(BasicConfiguration config) {
     return LDValue.of("Consul");
   }
 }
