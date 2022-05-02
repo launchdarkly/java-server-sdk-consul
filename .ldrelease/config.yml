@@ -4,7 +4,7 @@ repo:
   public: java-server-sdk-consul
 
 branches:
-  - name: master
+  - name: main
     description: 3.x - for Java SDK 5.0+
   - name: 1.x
     description: for Java SDK 4.x
