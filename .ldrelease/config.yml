@@ -5,7 +5,9 @@ repo:
 
 branches:
   - name: main
-    description: 3.x - for Java SDK 5.0+
+    description: for Java SDK 5.10+
+  - name: 3.x
+    description: for Java SDK 5.0-5.9
   - name: 1.x
     description: for Java SDK 4.x
 
