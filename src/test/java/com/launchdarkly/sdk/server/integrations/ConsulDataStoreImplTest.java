@@ -1,5 +1,6 @@
 package com.launchdarkly.sdk.server.integrations;
 
+import com.launchdarkly.sdk.server.interfaces.PersistentDataStoreFactory;
 import com.orbitz.consul.Consul;
 
 /**
@@ -14,13 +15,8 @@ import com.orbitz.consul.Consul;
 @SuppressWarnings("javadoc")
 public class ConsulDataStoreImplTest extends PersistentDataStoreTestBase<ConsulDataStoreImpl> {
   @Override
-  protected ConsulDataStoreImpl makeStore() {
-    return (ConsulDataStoreImpl)com.launchdarkly.sdk.server.integrations.Consul.dataStore().createPersistentDataStore(null);
-  }
-  
-  @Override
-  protected ConsulDataStoreImpl makeStoreWithPrefix(String prefix) {
-    return (ConsulDataStoreImpl)com.launchdarkly.sdk.server.integrations.Consul.dataStore().prefix(prefix).createPersistentDataStore(null);
+  protected PersistentDataStoreFactory buildStore(String prefix) {
+    return com.launchdarkly.sdk.server.integrations.Consul.dataStore().prefix(prefix);
   }
   
   @Override

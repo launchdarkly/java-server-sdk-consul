@@ -153,7 +153,7 @@ public final class ConsulDataStoreBuilder implements PersistentDataStoreFactory,
    */
   @Override
   public PersistentDataStore createPersistentDataStore(ClientContext context) {
-    return new ConsulDataStoreImpl(createClient(), prefix);
+    return new ConsulDataStoreImpl(createClient(), prefix, context.getBasic().getBaseLogger());
   }
 
   @Override

@@ -1,5 +1,6 @@
 package com.launchdarkly.sdk.server.integrations;
 
+import com.launchdarkly.logging.LDLogger;
 import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.DataKind;
 import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.FullDataSet;
 import com.launchdarkly.sdk.server.interfaces.DataStoreTypes.ItemDescriptor;
@@ -12,9 +13,6 @@ import com.orbitz.consul.model.kv.Operation;
 import com.orbitz.consul.model.kv.Value;
 import com.orbitz.consul.model.kv.Verb;
 import com.orbitz.consul.option.ImmutablePutOptions;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.AbstractMap;
@@ -45,14 +43,14 @@ import java.util.Set;
  * </ul>
  */
 final class ConsulDataStoreImpl implements PersistentDataStore {
-  private static final Logger logger = LoggerFactory.getLogger("com.launchdarkly.sdk.server.LDClient.DataStore.Consul");
-  
   private final Consul client;
   private final String prefix;
+  private final LDLogger logger;
   
-  ConsulDataStoreImpl(Consul client, String prefix) {
+  ConsulDataStoreImpl(Consul client, String prefix, LDLogger baseLogger) {
     this.client = client;
     this.prefix = prefix + "/";
+    this.logger = baseLogger.subLogger("DataStore").subLogger("Consul");
   }
   
   @Override
