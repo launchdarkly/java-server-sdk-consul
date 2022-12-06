@@ -5,7 +5,6 @@ package com.launchdarkly.sdk.server.integrations;
  * 
  * @since 1.1.0
  */
-@SuppressWarnings("javadoc")
 public abstract class Consul {
   private Consul() {}
   
@@ -14,9 +13,9 @@ public abstract class Consul {
    * <p>
    * This object can be modified with {@link ConsulDataStoreBuilder} methods for any desired
    * custom Consul options. Then, pass it to
-   * {@link com.launchdarkly.sdk.server.Components#persistentDataStore(com.launchdarkly.sdk.server.interfaces.PersistentDataStoreFactory)}
+   * {@link com.launchdarkly.sdk.server.Components#persistentDataStore(com.launchdarkly.sdk.server.subsystems.ComponentConfigurer)}
    * and set any desired caching options. Finally, pass the result to
-   * {@link com.launchdarkly.sdk.server.LDConfig.Builder#dataStore(com.launchdarkly.sdk.server.interfaces.DataStoreFactory)}.
+   * {@link com.launchdarkly.sdk.server.LDConfig.Builder#dataStore(com.launchdarkly.sdk.server.subsystems.ComponentConfigurer)}.
    * For example:
    * 
    * <pre><code>

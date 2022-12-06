@@ -1,13 +1,11 @@
 package com.launchdarkly.sdk.server.integrations;
 
 import com.google.common.net.HostAndPort;
-import com.launchdarkly.sdk.server.LDConfig;
-import com.launchdarkly.sdk.server.interfaces.BasicConfiguration;
-import com.launchdarkly.sdk.server.interfaces.ClientContext;
-import com.launchdarkly.sdk.server.interfaces.DiagnosticDescription;
-import com.launchdarkly.sdk.server.interfaces.PersistentDataStoreFactory;
-import com.launchdarkly.sdk.server.interfaces.PersistentDataStore;
 import com.launchdarkly.sdk.LDValue;
+import com.launchdarkly.sdk.server.subsystems.ClientContext;
+import com.launchdarkly.sdk.server.subsystems.ComponentConfigurer;
+import com.launchdarkly.sdk.server.subsystems.DiagnosticDescription;
+import com.launchdarkly.sdk.server.subsystems.PersistentDataStore;
 import com.orbitz.consul.Consul;
 
 import java.net.URL;
@@ -18,8 +16,8 @@ import java.net.URL;
  * Obtain an instance of this class by calling {@link com.launchdarkly.sdk.server.integrations.Consul#dataStore()}. After calling its methods
  * to specify any desired custom settings, wrap it in a {@link com.launchdarkly.sdk.server.integrations.PersistentDataStoreBuilder}
  * by calling {@code Components.persistentDataStore()}, then pass the result into the SDK configuration with
- * {@link com.launchdarkly.sdk.server.LDConfig.Builder#dataStore(com.launchdarkly.sdk.server.interfaces.DataStoreFactory)}.
- * You do not need to call {@link #createPersistentDataStore(ClientContext)} yourself to build the actual data store; that
+ * {@link com.launchdarkly.sdk.server.LDConfig.Builder#dataStore(com.launchdarkly.sdk.server.subsystems.ComponentConfigurer)}.
+ * You do not need to call {@link #build(ClientContext)} yourself to build the actual data store; that
  * will be done by the SDK.
  * <p>
  * The Consul client has many configuration options. This class has corresponding methods for
@@ -43,7 +41,7 @@ import java.net.URL;
  * 
  * @since 1.1.0
  */
-public final class ConsulDataStoreBuilder implements PersistentDataStoreFactory, DiagnosticDescription {
+public final class ConsulDataStoreBuilder implements ComponentConfigurer<PersistentDataStore>, DiagnosticDescription {
   /**
    * The default value for {@link #prefix(String)}.
    */
@@ -152,12 +150,12 @@ public final class ConsulDataStoreBuilder implements PersistentDataStoreFactory,
    * @return the data store configured by this builder
    */
   @Override
-  public PersistentDataStore createPersistentDataStore(ClientContext context) {
-    return new ConsulDataStoreImpl(createClient(), prefix, context.getBasic().getBaseLogger());
+  public PersistentDataStore build(ClientContext context) {
+    return new ConsulDataStoreImpl(createClient(), prefix, context.getBaseLogger());
   }
 
   @Override
-  public LDValue describeConfiguration(BasicConfiguration config) {
+  public LDValue describeConfiguration(ClientContext context) {
     return LDValue.of("Consul");
   }
 }
