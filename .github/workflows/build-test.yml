@@ -23,7 +23,7 @@ jobs:
         ports:
           - 8500:8500
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
       - name: Shared CI Steps
         uses: ./.github/actions/ci
@@ -37,7 +37,7 @@ jobs:
         javaversion: [11, 17]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
 
       - name: Setup Consul
         run: |
